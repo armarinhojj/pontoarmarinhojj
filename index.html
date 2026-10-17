@@ -399,13 +399,16 @@ table.shell-table tbody tr:hover { background: color-mix(in srgb, var(--accent) 
     /* Success Banner */
     .punch-confirm-banner {
       background: #ecfdf5;
-      border: 2px solid #34d399;
-      border-radius: 10px;
-      padding: 1.1rem;
+      border: 2px solid #10b981;
+      border-radius: 12px;
+      padding: 1rem 1.25rem;
       margin-bottom: 1.25rem;
       display: flex;
       align-items: center;
+      justify-content: space-between;
       gap: 1rem;
+      flex-wrap: wrap;
+      box-shadow: 0 4px 14px rgba(5, 150, 105, 0.15);
       animation: bannerSlide 0.3s ease-out;
     }
     @keyframes bannerSlide {
@@ -413,15 +416,15 @@ table.shell-table tbody tr:hover { background: color-mix(in srgb, var(--accent) 
       to { opacity: 1; transform: translateY(0); }
     }
     .punch-confirm-icon {
-      width: 44px;
-      height: 44px;
+      width: 42px;
+      height: 42px;
       border-radius: 50%;
       background: #059669;
       color: #ffffff;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 1.5rem;
+      font-size: 1.4rem;
       font-weight: bold;
       flex-shrink: 0;
     }
@@ -1161,18 +1164,27 @@ table.shell-table tbody tr:hover { background: color-mix(in srgb, var(--accent) 
         </div>
       </div>
 
-      <!-- Confirmation Notification Toast/Banner -->
+      <!-- Confirmation Notification Toast/Banner with Next Employee countdown -->
       <div id="punchSuccessBanner" class="punch-confirm-banner hidden" role="alert">
-        <div class="punch-confirm-icon">✓</div>
-        <div style="flex: 1;">
-          <div id="punchSuccessTitle" style="font-size: 1.05rem; font-weight: 700; color: #065f46;">
-            Ponto Registrado com Sucesso!
-          </div>
-          <div id="punchSuccessMsg" style="font-size: 0.9rem; color: #047857; margin-top: 0.15rem;">
-            Horário registrado às 08:00
+        <div style="display: flex; align-items: center; gap: 0.85rem; flex: 1; min-width: 240px;">
+          <div class="punch-confirm-icon">✓</div>
+          <div>
+            <div id="punchSuccessTitle" style="font-size: 1.1rem; font-weight: 800; color: #065f46;">
+              Entrada Registrada com Sucesso!
+            </div>
+            <div id="punchSuccessMsg" style="font-size: 0.9rem; color: #047857; margin-top: 0.15rem; font-weight: 600;">
+              Horário registrado às 08:00
+            </div>
           </div>
         </div>
-        <button id="btnCloseBanner" style="background:none; border:none; font-size:1.25rem; color:#065f46; cursor:pointer;" aria-label="Fechar">✕</button>
+        <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+          <button id="btnNextEmployeeBanner" type="button" class="btn" style="background:#059669; color:#ffffff; font-weight:700; font-size:0.9rem; padding:0.55rem 1rem; border:none; border-radius:8px; cursor:pointer; box-shadow:0 2px 6px rgba(5,150,105,0.3); display:inline-flex; align-items:center; gap:0.35rem;">
+            Próximo funcionário (4s)
+          </button>
+          <button id="btnCloseBanner" type="button" style="background:transparent; border:1px solid #a7f3d0; border-radius:6px; padding:0.45rem 0.7rem; font-size:0.8rem; font-weight:600; color:#065f46; cursor:pointer;" title="Cancelar retorno automático e continuar nesta tela">
+            Permanecer
+          </button>
+        </div>
       </div>
 
       <!-- Main Punch Card -->
@@ -1191,14 +1203,18 @@ table.shell-table tbody tr:hover { background: color-mix(in srgb, var(--accent) 
               </div>
               <span id="empCloudSyncIndicator" class="sync-status-pill hidden" style="font-size:0.7rem; padding:0.15rem 0.5rem;"></span>
             </div>
+            <!-- Day Punch Status Badge -->
+            <div id="empDayStatusBanner" style="margin-top: 0.45rem; font-size: 0.85rem; font-weight: 600; color: var(--accent); background: #eef3f8; padding: 0.3rem 0.75rem; border-radius: 6px; display: inline-flex; align-items: center; gap: 0.4rem; border: 1px solid #d9e4ee;">
+              Nenhum ponto registrado hoje
+            </div>
           </div>
           
           <div style="display: flex; gap: 0.5rem; align-items: center; margin-top: 0.5rem;">
             <div class="live-clock-pill" id="empLiveClock">
               ⏱ <span id="empClockTime">--:--:--</span>
             </div>
-            <button id="btnSwitchEmployee" class="btn" style="border: 1px solid #cbd5e1; background: #ffffff; padding: 0.4rem 0.85rem; font-size: 0.85rem; font-weight: 600; cursor: pointer; border-radius: 6px;">
-              ⇄ Voltar
+            <button id="btnSwitchEmployee" class="btn" style="border: 1px solid #cbd5e1; background: #ffffff; padding: 0.45rem 0.9rem; font-size: 0.85rem; font-weight: 600; cursor: pointer; border-radius: 6px; display: inline-flex; align-items: center; gap: 0.35rem;">
+              ⇄ Trocar funcionário
             </button>
           </div>
         </div>
@@ -2214,18 +2230,26 @@ function doPost(e) {
       sheetsUrl: ''
     };
 
+    // Helper: format Date object to local YYYY-MM-DD string (NEVER uses UTC / toISOString)
+    function formatIsoLocalDate(dateObj) {
+      const d = dateObj || new Date();
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${y}-${m}-${day}`;
+    }
+
     // Helper: generate sample records for the last 5 business days for realistic UI preview
     function generateInitialRecords() {
       const records = [];
       const today = new Date();
       
       for (let i = 5; i >= 1; i--) {
-        const d = new Date(today);
-        d.setDate(today.getDate() - i);
+        const d = new Date(today.getFullYear(), today.getMonth(), today.getDate() - i, 12, 0, 0);
         // Skip sundays
         if (d.getDay() === 0) continue;
         
-        const dateStr = d.toISOString().split('T')[0];
+        const dateStr = formatIsoLocalDate(d);
 
         // Maria Souza - on time
         records.push({
@@ -2363,13 +2387,9 @@ function doPost(e) {
       savePendingQueue(q);
     }
 
-    // Date/Time helpers (pt-BR)
+    // Date/Time helpers (pt-BR) - Local Device Timezone strictly enforced
     function getTodayDateStr() {
-      const now = new Date();
-      const y = now.getFullYear();
-      const m = String(now.getMonth() + 1).padStart(2, '0');
-      const d = String(now.getDate()).padStart(2, '0');
-      return `${y}-${m}-${d}`;
+      return formatIsoLocalDate(new Date());
     }
 
     function getNowTimeStr() {
@@ -2453,7 +2473,7 @@ function doPost(e) {
       const emp = state.employees.find(e => e.id === empId);
       if (!emp) return false;
 
-      const parts = dateStr.split('-');
+      const parts = (dateStr || '').split('-');
       if (parts.length !== 3) return false;
       const monthKey = `${parts[0]}-${parts[1]}`;
       const dayNum = parseInt(parts[2], 10);
@@ -2463,8 +2483,11 @@ function doPost(e) {
         return state.schedules[monthKey][empId].includes(dayNum);
       }
 
-      // COMPATIBILITY FALLBACK: calculate day of week for this date and check weekly pattern
-      const dObj = new Date(dateStr + 'T12:00:00');
+      // COMPATIBILITY FALLBACK: local date day of week (noon avoids DST shifts)
+      const y = parseInt(parts[0], 10);
+      const m = parseInt(parts[1], 10) - 1;
+      const d = parseInt(parts[2], 10);
+      const dObj = new Date(y, m, d, 12, 0, 0);
       const dayOfWeek = dObj.getDay();
       return Array.isArray(emp.folgas) && emp.folgas.includes(dayOfWeek);
     }
@@ -2685,7 +2708,9 @@ function doPost(e) {
       }
     }
 
-    // Pull all data from Google Sheets (Planilha = fonte da verdade)
+    // Pull all data from Google Sheets with NON-DESTRUCTIVE SMART MERGE:
+    // Local records that do not exist in sheets are preserved and queued/pushed.
+    // Cloud records update local cache. Never wipe unconfirmed local punches.
     async function fetchFromCloud(silent = false) {
       const url = (state.settings.sheetsUrl || '').trim();
       if (!url) return false;
@@ -2697,32 +2722,107 @@ function doPost(e) {
 
         const data = await resp.json();
         if (data && data.ok) {
-          // If employees exist in sheets, replace local
+          // 1. EMPLOYEES: Merge by stable ID, preserving any local employees not yet synced
           if (Array.isArray(data.employees) && data.employees.length > 0) {
-            state.employees = data.employees;
+            const cloudEmps = data.employees;
+            const empMap = new Map();
+            cloudEmps.forEach(e => {
+              if (e && e.id) empMap.set(String(e.id), e);
+            });
+
+            // Keep local employees that aren't in sheets yet and enqueue them
+            state.employees.forEach(localEmp => {
+              if (localEmp && localEmp.id && !empMap.has(String(localEmp.id))) {
+                empMap.set(String(localEmp.id), localEmp);
+                pushActionToCloud({
+                  action: 'saveEmployee',
+                  employee: localEmp
+                });
+              }
+            });
+
+            state.employees = Array.from(empMap.values());
             saveEmployees();
           }
 
-          // If schedules exist
+          // 2. SCHEDULES: Non-destructive merge
           if (data.schedules && typeof data.schedules === 'object') {
-            state.schedules = data.schedules;
+            state.schedules = { ...state.schedules, ...data.schedules };
             saveSchedules();
           }
 
-          // If settings exist
+          // 3. SETTINGS: Preserve local sheetsUrl
           if (data.settings && typeof data.settings === 'object') {
             state.settings = {
               ...state.settings,
               ...data.settings,
-              sheetsUrl: url // preserve url
+              sheetsUrl: url
             };
             saveSettings();
           }
 
-          // If records exist
+          // 4. RECORDS MERGE: (data + employeeId key)
+          // Local punches not present in sheets are preserved and re-sent via POST
           if (Array.isArray(data.records)) {
-            state.records = data.records;
+            const recordsMap = new Map();
+            
+            // Seed map with cloud records
+            data.records.forEach(cRec => {
+              if (cRec && cRec.data && cRec.employeeId) {
+                const key = `${cRec.data}__${cRec.employeeId}`;
+                recordsMap.set(key, cRec);
+              }
+            });
+
+            const unsyncedLocalRecords = [];
+
+            // Check every local record against cloud data
+            state.records.forEach(localRec => {
+              if (!localRec || !localRec.data || !localRec.employeeId) return;
+              const key = `${localRec.data}__${localRec.employeeId}`;
+              const cloudRec = recordsMap.get(key);
+
+              if (!cloudRec) {
+                // Completely new local record (e.g. today's punch made while offline or pending)
+                recordsMap.set(key, localRec);
+                unsyncedLocalRecords.push(localRec);
+              } else {
+                // Record exists in both: merge punches preserving non-empty local fields
+                let localHasPunchesNotInCloud = false;
+                const merged = { ...cloudRec };
+                ['entrada', 'intervaloInicio', 'intervaloFim', 'saida'].forEach(f => {
+                  if (localRec[f] && !cloudRec[f]) {
+                    merged[f] = localRec[f];
+                    localHasPunchesNotInCloud = true;
+                  }
+                });
+
+                if (localHasPunchesNotInCloud) {
+                  unsyncedLocalRecords.push(merged);
+                }
+                recordsMap.set(key, merged);
+              }
+            });
+
+            state.records = Array.from(recordsMap.values());
             saveRecords();
+
+            // Re-sync any local record missing in cloud in background
+            unsyncedLocalRecords.forEach(rec => {
+              const empObj = state.employees.find(e => e.id === rec.employeeId);
+              pushActionToCloud({
+                action: 'saveRecord',
+                record: {
+                  data: rec.data,
+                  employeeId: rec.employeeId,
+                  funcionarioNome: empObj ? empObj.nome : (rec.funcionarioNome || ''),
+                  entrada: rec.entrada || '',
+                  intervaloInicio: rec.intervaloInicio || '',
+                  intervaloFim: rec.intervaloFim || '',
+                  saida: rec.saida || ''
+                }
+              });
+            });
           }
 
           state.lastSyncTimestamp = Date.now();
@@ -2732,13 +2832,11 @@ function doPost(e) {
           // Refresh current views
           renderHomeScreen();
           if (state.currentEmployee) {
-            // refresh current employee reference
             const updated = state.employees.find(e => e.id === state.currentEmployee.id);
             if (updated) state.currentEmployee = updated;
             renderEmployeeScreen();
           }
 
-          // Process any queue that might be waiting
           processPendingQueue();
           return true;
         } else {
@@ -2831,6 +2929,24 @@ function doPost(e) {
 
       state.isSyncingQueue = false;
       updateSyncUI();
+    }
+
+    // Clean return to home screen (cancels any pending countdown)
+    function returnToHomeScreen() {
+      if (window.__bannerCountdownInterval) {
+        clearInterval(window.__bannerCountdownInterval);
+        window.__bannerCountdownInterval = null;
+      }
+      if (window.__bannerTimer) {
+        clearTimeout(window.__bannerTimer);
+        window.__bannerTimer = null;
+      }
+      const banner = document.getElementById('punchSuccessBanner');
+      if (banner) banner.classList.add('hidden');
+
+      state.currentEmployee = null;
+      renderHomeScreen();
+      showScreen('screenHome');
     }
 
     // Screen Navigation
@@ -3055,8 +3171,35 @@ function doPost(e) {
         statusBadge.style.display = 'none';
       }
 
-      // STATE MACHINE FOR BUTTONS
-      // 1. Entrada
+      // Dynamic Day Status Description
+      const dayStatusEl = document.getElementById('empDayStatusBanner');
+      if (dayStatusEl) {
+        if (!rec || !rec.entrada) {
+          dayStatusEl.innerHTML = '🕒 Nenhum ponto registrado hoje';
+          dayStatusEl.style.color = '#475569';
+          dayStatusEl.style.background = '#f1f5f9';
+        } else if (rec.saida) {
+          const calc = calculateRecordHours(rec);
+          dayStatusEl.innerHTML = `✅ Expediente encerrado às ${rec.saida} (${calc.str} trabalhadas)`;
+          dayStatusEl.style.color = '#15803d';
+          dayStatusEl.style.background = '#dcfce7';
+        } else if (rec.intervaloInicio && !rec.intervaloFim) {
+          dayStatusEl.innerHTML = `⏸️ Intervalo iniciado às ${rec.intervaloInicio} — aguardando retorno`;
+          dayStatusEl.style.color = '#b45309';
+          dayStatusEl.style.background = '#fef3c7';
+        } else if (rec.intervaloInicio && rec.intervaloFim) {
+          dayStatusEl.innerHTML = `💼 Retorno do almoço às ${rec.intervaloFim} — expediente em andamento`;
+          dayStatusEl.style.color = 'var(--accent)';
+          dayStatusEl.style.background = '#eef3f8';
+        } else {
+          dayStatusEl.innerHTML = `📌 Entrada registrada às ${rec.entrada} — aguardando intervalo`;
+          dayStatusEl.style.color = 'var(--accent)';
+          dayStatusEl.style.background = '#eef3f8';
+        }
+      }
+
+      // STATE MACHINE FOR BUTTONS (Accurate disabled / completed states)
+      // 1. Entrada: if already punched, disabled with text "Entrada já registrada às HH:MM"
       const btnEntrada = document.getElementById('btnPunchEntrada');
       const hintEntrada = document.getElementById('hintEntrada');
       if (!rec || !rec.entrada) {
@@ -3064,7 +3207,7 @@ function doPost(e) {
         hintEntrada.textContent = 'Clique para registrar chegada';
       } else {
         setBtnState(btnEntrada, false, true);
-        hintEntrada.textContent = `Registrado às ${rec.entrada}`;
+        hintEntrada.textContent = `Entrada já registrada às ${rec.entrada}`;
       }
 
       // 2. Início do Intervalo
@@ -3075,7 +3218,7 @@ function doPost(e) {
         hintIntIni.textContent = 'Aguardando entrada';
       } else if (rec.intervaloInicio) {
         setBtnState(btnIntIni, false, true);
-        hintIntIni.textContent = `Iniciado às ${rec.intervaloInicio}`;
+        hintIntIni.textContent = `Início já registrado às ${rec.intervaloInicio}`;
       } else if (rec.saida) {
         setBtnState(btnIntIni, false, false);
         hintIntIni.textContent = 'Dia já encerrado';
@@ -3092,7 +3235,7 @@ function doPost(e) {
         hintIntFim.textContent = 'Aguardando início do intervalo';
       } else if (rec.intervaloFim) {
         setBtnState(btnIntFim, false, true);
-        hintIntFim.textContent = `Retorno às ${rec.intervaloFim}`;
+        hintIntFim.textContent = `Retorno já registrado às ${rec.intervaloFim}`;
       } else if (rec.saida) {
         setBtnState(btnIntFim, false, false);
         hintIntFim.textContent = 'Dia já encerrado';
@@ -3109,9 +3252,8 @@ function doPost(e) {
         hintSaida.textContent = 'Aguardando entrada';
       } else if (rec.saida) {
         setBtnState(btnSaida, false, true);
-        hintSaida.textContent = `Saída às ${rec.saida}`;
+        hintSaida.textContent = `Saída já registrada às ${rec.saida}`;
       } else if (rec.intervaloInicio && !rec.intervaloFim) {
-        // Interval is open
         setBtnState(btnSaida, false, false);
         hintSaida.textContent = 'Finalize o intervalo primeiro';
       } else {
@@ -3134,20 +3276,22 @@ function doPost(e) {
       }
     }
 
-    // PUNCH ACTION HANDLER
+    // PUNCH ACTION HANDLER:
+    // Synchronous immediate localStorage save + background sync + multi-user auto return
     function executePunch(punchType, punchTitle) {
       if (!state.currentEmployee) return;
 
       const empId = state.currentEmployee.id;
-      const todayStr = getTodayDateStr();
+      const localDateStr = getTodayDateStr();
       const nowTimeStr = getNowTimeStr();
 
-      let rec = state.records.find(r => r.employeeId === empId && r.data === todayStr);
+      // Find or create record for today using local date
+      let rec = state.records.find(r => r.employeeId === empId && r.data === localDateStr);
       if (!rec) {
         rec = {
-          id: 'rec_' + todayStr + '_' + empId + '_' + Date.now(),
+          id: 'rec_' + localDateStr + '_' + empId,
           employeeId: empId,
-          data: todayStr,
+          data: localDateStr,
           entrada: null,
           intervaloInicio: null,
           intervaloFim: null,
@@ -3156,10 +3300,13 @@ function doPost(e) {
         state.records.push(rec);
       }
 
+      // Assign punch value
       rec[punchType] = nowTimeStr;
+
+      // 1. IMMEDIATE SYNCHRONOUS LOCAL SAVE
       saveRecords();
 
-      // Cloud Sync: send record upsert
+      // 2. BACKGROUND CLOUD SYNC (Non-blocking)
       const empObj = state.employees.find(e => e.id === empId);
       pushActionToCloud({
         action: 'saveRecord',
@@ -3167,23 +3314,28 @@ function doPost(e) {
           data: rec.data,
           employeeId: rec.employeeId,
           funcionarioNome: empObj ? empObj.nome : '',
-          entrada: rec.entrada,
-          intervaloInicio: rec.intervaloInicio,
-          intervaloFim: rec.intervaloFim,
-          saida: rec.saida
+          entrada: rec.entrada || '',
+          intervaloInicio: rec.intervaloInicio || '',
+          intervaloFim: rec.intervaloFim || '',
+          saida: rec.saida || ''
         }
       });
 
-      // Show confirmation banner
-      showPunchSuccessBanner(punchTitle, nowTimeStr);
-
+      // 3. Render current updated state
       renderEmployeeScreen();
+
+      // 4. Show confirmation banner with 4-second auto-return for shared device
+      showPunchSuccessBanner(punchTitle, nowTimeStr);
     }
 
     function showPunchSuccessBanner(punchTitle, timeStr) {
       const banner = document.getElementById('punchSuccessBanner');
-      document.getElementById('punchSuccessTitle').textContent = `✓ ${punchTitle} Registrado!`;
-      document.getElementById('punchSuccessMsg').textContent = `Horário oficial confirmado às ${timeStr}`;
+      const titleEl = document.getElementById('punchSuccessTitle');
+      const msgEl = document.getElementById('punchSuccessMsg');
+      const btnNext = document.getElementById('btnNextEmployeeBanner');
+
+      titleEl.textContent = `✅ ${punchTitle} registrada às ${timeStr}`;
+      msgEl.textContent = `Horário oficial salvo com sucesso no aparelho`;
       banner.classList.remove('hidden');
 
       // Audio feedback (haptic synth click)
@@ -3203,14 +3355,36 @@ function doPost(e) {
         // AudioContext not allowed or not supported
       }
 
-      // Auto dismiss after 6 seconds
-      clearTimeout(window.__bannerTimer);
-      window.__bannerTimer = setTimeout(() => {
-        banner.classList.add('hidden');
-      }, 6000);
+      // 4-second countdown with auto-switch to Home Screen
+      if (window.__bannerCountdownInterval) {
+        clearInterval(window.__bannerCountdownInterval);
+        window.__bannerCountdownInterval = null;
+      }
+      if (window.__bannerTimer) {
+        clearTimeout(window.__bannerTimer);
+        window.__bannerTimer = null;
+      }
+
+      let remainingSec = 4;
+      if (btnNext) {
+        btnNext.textContent = `Próximo funcionário (${remainingSec}s)`;
+      }
+
+      window.__bannerCountdownInterval = setInterval(() => {
+        remainingSec--;
+        if (remainingSec > 0) {
+          if (btnNext) {
+            btnNext.textContent = `Próximo funcionário (${remainingSec}s)`;
+          }
+        } else {
+          clearInterval(window.__bannerCountdownInterval);
+          window.__bannerCountdownInterval = null;
+          returnToHomeScreen();
+        }
+      }, 1000);
     }
 
-    // 7 DAYS SUMMARY
+    // 7 DAYS SUMMARY (Local date based)
     function renderWeekSummary(empId) {
       const today = new Date();
       let totalMinutes = 0;
@@ -3219,9 +3393,8 @@ function doPost(e) {
 
       // Last 7 calendar days
       for (let i = 0; i < 7; i++) {
-        const d = new Date(today);
-        d.setDate(today.getDate() - i);
-        const iso = d.toISOString().split('T')[0];
+        const d = new Date(today.getFullYear(), today.getMonth(), today.getDate() - i, 12, 0, 0);
+        const iso = formatIsoLocalDate(d);
 
         const rec = state.records.find(r => r.employeeId === empId && r.data === iso);
         const weekdayName = d.toLocaleDateString('pt-BR', { weekday: 'short' });
@@ -3346,12 +3519,10 @@ function doPost(e) {
       // Default date filter to the last 7 days (today - 6 days up to today) if not set
       if (!document.getElementById('filterDateStart').value || !document.getElementById('filterDateEnd').value) {
         const today = new Date();
-        const past7 = new Date();
-        past7.setDate(today.getDate() - 6);
+        const past7 = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 6, 12, 0, 0);
 
-        const toIso = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-        document.getElementById('filterDateStart').value = toIso(past7);
-        document.getElementById('filterDateEnd').value = toIso(today);
+        document.getElementById('filterDateStart').value = formatIsoLocalDate(past7);
+        document.getElementById('filterDateEnd').value = formatIsoLocalDate(today);
       }
 
       // Default month to current month
@@ -3362,17 +3533,16 @@ function doPost(e) {
       }
     }
 
-    // Helper: generate list of ISO dates between start and end inclusive
+    // Helper: generate list of ISO dates between start and end inclusive (Local date strictly)
     function getDatesInRange(startIso, endIso) {
       if (!startIso || !endIso) return [];
       const list = [];
-      let cur = new Date(startIso + 'T12:00:00');
-      const end = new Date(endIso + 'T12:00:00');
+      const [sY, sM, sD] = startIso.split('-').map(Number);
+      const [eY, eM, eD] = endIso.split('-').map(Number);
+      let cur = new Date(sY, sM - 1, sD, 12, 0, 0);
+      const end = new Date(eY, eM - 1, eD, 12, 0, 0);
       while (cur <= end) {
-        const y = cur.getFullYear();
-        const m = String(cur.getMonth() + 1).padStart(2, '0');
-        const d = String(cur.getDate()).padStart(2, '0');
-        list.push(`${y}-${m}-${d}`);
+        list.push(formatIsoLocalDate(cur));
         cur.setDate(cur.getDate() + 1);
       }
       return list;
@@ -4109,11 +4279,13 @@ function doPost(e) {
       });
 
       // Employee screen actions
-      document.getElementById('btnSwitchEmployee').addEventListener('click', () => {
-        state.currentEmployee = null;
-        renderHomeScreen();
-        showScreen('screenHome');
-      });
+      document.getElementById('btnSwitchEmployee').addEventListener('click', returnToHomeScreen);
+
+      // Next Employee banner button
+      const btnNextBanner = document.getElementById('btnNextEmployeeBanner');
+      if (btnNextBanner) {
+        btnNextBanner.addEventListener('click', returnToHomeScreen);
+      }
 
       document.getElementById('btnPunchEntrada').addEventListener('click', () => {
         executePunch('entrada', 'Entrada');
@@ -4129,6 +4301,10 @@ function doPost(e) {
       });
 
       document.getElementById('btnCloseBanner').addEventListener('click', () => {
+        if (window.__bannerCountdownInterval) {
+          clearInterval(window.__bannerCountdownInterval);
+          window.__bannerCountdownInterval = null;
+        }
         document.getElementById('punchSuccessBanner').classList.add('hidden');
       });
 
