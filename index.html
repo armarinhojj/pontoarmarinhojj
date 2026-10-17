@@ -900,6 +900,47 @@ table.shell-table tbody tr:hover { background: color-mix(in srgb, var(--accent) 
       color: #e2e8f0;
       border-color: rgba(255, 255, 255, 0.25);
     }
+    .sync-status-pill.status-connected-home {
+      background: #dcfce7;
+      color: #166534;
+      border-color: #86efac;
+    }
+    .sync-status-pill.status-offline-home {
+      background: #fff7ed;
+      color: #c2410c;
+      border-color: #fed7aa;
+    }
+    .sync-status-pill.status-none-home {
+      background: #f1f5f9;
+      color: #64748b;
+      border-color: #cbd5e1;
+    }
+
+    /* Floating Toast */
+    .toast-floating {
+      position: fixed;
+      bottom: 1.5rem;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #1e293b;
+      color: #ffffff;
+      padding: 0.75rem 1.25rem;
+      border-radius: 9999px;
+      font-size: 0.875rem;
+      font-weight: 600;
+      box-shadow: 0 4px 18px rgba(0,0,0,0.25);
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      animation: toastFadeIn 0.3s ease;
+      white-space: nowrap;
+      pointer-events: none;
+    }
+    @keyframes toastFadeIn {
+      from { opacity: 0; transform: translate(-50%, 10px); }
+      to { opacity: 1; transform: translate(-50%, 0); }
+    }
 
     .sync-badge-panel {
       display: inline-flex;
@@ -1116,9 +1157,12 @@ table.shell-table tbody tr:hover { background: color-mix(in srgb, var(--accent) 
             <h2 style="font-size: 1.4rem; font-weight: 700; margin: 0 0 0.25rem; color: var(--accent);">
               Controle de Ponto Digital
             </h2>
-            <p style="margin: 0; color: #64748b; font-size: 0.95rem;" id="homeDateDisplay">
-              Carregando data...
-            </p>
+            <div style="display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap;">
+              <p style="margin: 0; color: #64748b; font-size: 0.95rem;" id="homeDateDisplay">
+                Carregando data...
+              </p>
+              <span id="homeCloudIndicator" class="sync-status-pill status-none-home" title="Status da sincronização com a nuvem">📴 Sem nuvem</span>
+            </div>
           </div>
           <div class="live-clock-pill" id="homeClock" aria-label="Horário oficial">
             ⏱ <span id="homeClockTime">--:--:--</span>
@@ -1497,6 +1541,17 @@ table.shell-table tbody tr:hover { background: color-mix(in srgb, var(--accent) 
         <!-- TAB: CLOUD GOOGLE SHEETS -->
         <div id="tabCloud" class="admin-tab-pane hidden">
           <div style="max-width: 680px;">
+            <!-- Unconnected New Device Alert Banner -->
+            <div id="cloudUnconnectedNotice" class="hidden" style="background:#fffbeb; border:1.5px solid #f59e0b; border-radius:10px; padding:0.9rem 1.1rem; margin-bottom:1.25rem; color:#92400e; font-size:0.875rem; line-height:1.45;">
+              <div style="display:flex; gap:0.5rem; align-items:flex-start;">
+                <span style="font-size:1.2rem; line-height:1;">⚠️</span>
+                <div>
+                  <strong style="display:block; margin-bottom:0.2rem;">Este aparelho ainda não está conectado.</strong>
+                  Cole aqui a URL do Apps Script ou abra o link do app com <code>?nuvem=URL_DO_SCRIPT</code>.
+                </div>
+              </div>
+            </div>
+
             <div style="margin-bottom: 1.25rem;">
               <h3 style="font-size: 1.15rem; font-weight: 700; color: #1e293b; margin: 0 0 0.35rem;">
                 Integração Nuvem (Google Sheets)
@@ -1504,6 +1559,22 @@ table.shell-table tbody tr:hover { background: color-mix(in srgb, var(--accent) 
               <p style="margin: 0; font-size: 0.9rem; color: #475569; line-height: 1.45;">
                 Conecte o app a uma planilha do Google para centralizar funcionários, escalas e registros. Assim qualquer aparelho usa os mesmos dados.
               </p>
+            </div>
+
+            <!-- Shareable link with auto-connect parameter -->
+            <div id="shareableLinkWrap" class="hidden" style="background:#eff6ff; border:1.5px solid #bfdbfe; border-radius:10px; padding:0.85rem 1rem; margin-bottom:1.25rem;">
+              <span style="font-size:0.75rem; font-weight:700; color:#1e40af; text-transform:uppercase; letter-spacing:0.04em;">
+                🔗 Link de conexão automática para outros aparelhos:
+              </span>
+              <p style="margin:0.2rem 0 0.45rem; font-size:0.8rem; color:#3b82f6;">
+                Abra este link em outro celular ou tablet para sincronizar sem precisar digitar URLs:
+              </p>
+              <div style="display:flex; gap:0.5rem; align-items:center;">
+                <input type="text" id="shareableLinkInput" readonly class="form-control" style="font-size:0.8rem; background:#ffffff;">
+                <button id="btnCopyShareableLink" class="btn" type="button" style="background:#1e40af; color:#ffffff; font-weight:600; font-size:0.8rem; padding:0.5rem 0.8rem; border:none; border-radius:6px; cursor:pointer; white-space:nowrap;">
+                  Copiar
+                </button>
+              </div>
             </div>
 
             <!-- Current Connection Status Card -->
@@ -1554,6 +1625,7 @@ table.shell-table tbody tr:hover { background: color-mix(in srgb, var(--accent) 
                 <li>Clique no botão azul <strong>Implantar &gt; Nova implantação</strong>; selecione o tipo <strong>App da Web</strong>; defina <em>Executar como: Eu</em> e <em>Quem pode acessar: Qualquer pessoa</em></li>
                 <li>Copie a <strong>URL do aplicativo da Web</strong> gerada (termina obrigatoriamente com <code>/exec</code>) e cole no campo acima</li>
                 <li>Clique em <strong>Salvar e conectar</strong>. O app criará automaticamente todas as abas necessárias na planilha!</li>
+                <li><strong>Para conectar outros aparelhos:</strong> compartilhe o link do app assim: <code>SEU_LINK?nuvem=URL_DO_SCRIPT</code> — o aparelho conecta sozinho ao abrir.</li>
               </ol>
             </details>
 
@@ -2184,6 +2256,9 @@ function doPost(e) {
   return jsonResponse({ ok: true });
 }</script>
 
+  <!-- FLOATING TOAST BANNER -->
+  <div id="toastNotification" class="toast-floating hidden" role="status" aria-live="polite"></div>
+
   <!-- Page Footer -->
   <footer class="app-footer">
     <p style="margin: 0 0 0.35rem;">
@@ -2635,14 +2710,60 @@ function doPost(e) {
       setInterval(tick, 1000);
     }
 
+    // Helper: checks if employees list still contains only the default seed employees
+    function isOnlyDefaultEmployees() {
+      if (!Array.isArray(state.employees) || state.employees.length !== DEFAULT_EMPLOYEES.length) {
+        return false;
+      }
+      const defaultIds = ['emp_1', 'emp_2', 'emp_3'];
+      return state.employees.every(e => defaultIds.includes(e.id));
+    }
+
+    // Helper: Floating toast display
+    function showToast(message, duration = 3000) {
+      const toast = document.getElementById('toastNotification');
+      if (!toast) return;
+      toast.textContent = message;
+      toast.classList.remove('hidden');
+      if (window.__toastTimer) clearTimeout(window.__toastTimer);
+      window.__toastTimer = setTimeout(() => {
+        toast.classList.add('hidden');
+      }, duration);
+    }
+
     // CLOUD SYNC ENGINE (GOOGLE SHEETS)
     function updateSyncUI() {
       const url = (state.settings.sheetsUrl || '').trim();
       const queue = getPendingQueue();
       const topPill = document.getElementById('cloudSyncPillTop');
       const empPill = document.getElementById('empCloudSyncIndicator');
+      const homePill = document.getElementById('homeCloudIndicator');
       const adminBadge = document.getElementById('cloudStatusBadge');
       const adminLastSync = document.getElementById('cloudLastSyncTime');
+      const unconnectedNotice = document.getElementById('cloudUnconnectedNotice');
+      const shareWrap = document.getElementById('shareableLinkWrap');
+      const shareInput = document.getElementById('shareableLinkInput');
+
+      // Update Unconnected Notice in Admin Nuvem tab
+      if (unconnectedNotice) {
+        if (!url && isOnlyDefaultEmployees()) {
+          unconnectedNotice.classList.remove('hidden');
+        } else {
+          unconnectedNotice.classList.add('hidden');
+        }
+      }
+
+      // Update Shareable Link Box
+      if (shareWrap && shareInput) {
+        if (url) {
+          shareWrap.classList.remove('hidden');
+          const cleanBase = window.location.origin + window.location.pathname;
+          shareInput.value = `${cleanBase}?nuvem=${encodeURIComponent(url)}`;
+        } else {
+          shareWrap.classList.add('hidden');
+          shareInput.value = '';
+        }
+      }
 
       if (!url) {
         state.syncStatus = 'unconfigured';
@@ -2651,6 +2772,10 @@ function doPost(e) {
           topPill.textContent = '';
         }
         if (empPill) empPill.classList.add('hidden');
+        if (homePill) {
+          homePill.className = 'sync-status-pill status-none-home';
+          homePill.textContent = '📴 Sem nuvem';
+        }
         if (adminBadge) {
           adminBadge.className = 'sync-badge-panel unconfigured';
           adminBadge.textContent = 'Integração não configurada';
@@ -2659,7 +2784,7 @@ function doPost(e) {
         return;
       }
 
-      // There is an URL configured
+      // There is a configured URL
       if (queue.length > 0) {
         state.syncStatus = 'offline';
         const label = `📴 Offline — ${queue.length} alteraç${queue.length === 1 ? 'ão pendente' : 'ões pendentes'}`;
@@ -2673,6 +2798,10 @@ function doPost(e) {
           empPill.className = 'sync-status-pill status-offline';
           empPill.textContent = label;
           empPill.classList.remove('hidden');
+        }
+        if (homePill) {
+          homePill.className = 'sync-status-pill status-offline-home';
+          homePill.textContent = `📴 Offline (${queue.length} pendente${queue.length > 1 ? 's' : ''})`;
         }
         if (adminBadge) {
           adminBadge.className = 'sync-badge-panel offline';
@@ -2691,6 +2820,10 @@ function doPost(e) {
           empPill.className = 'sync-status-pill status-connected';
           empPill.textContent = label;
           empPill.classList.remove('hidden');
+        }
+        if (homePill) {
+          homePill.className = 'sync-status-pill status-connected-home';
+          homePill.textContent = '☁️ Conectado';
         }
         if (adminBadge) {
           adminBadge.className = 'sync-badge-panel connected';
@@ -2722,41 +2855,28 @@ function doPost(e) {
 
         const data = await resp.json();
         if (data && data.ok) {
-          // 1. EMPLOYEES: Merge by stable ID, preserving any local employees not yet synced
-          if (Array.isArray(data.employees) && data.employees.length > 0) {
-            const cloudEmps = data.employees;
-            const empMap = new Map();
-            cloudEmps.forEach(e => {
-              if (e && e.id) empMap.set(String(e.id), e);
-            });
-
-            // Keep local employees that aren't in sheets yet and enqueue them
-            state.employees.forEach(localEmp => {
-              if (localEmp && localEmp.id && !empMap.has(String(localEmp.id))) {
-                empMap.set(String(localEmp.id), localEmp);
-                pushActionToCloud({
-                  action: 'saveEmployee',
-                  employee: localEmp
-                });
-              }
-            });
-
-            state.employees = Array.from(empMap.values());
+          // 1. EMPLOYEES: The cloud spreadsheet is ALWAYS the single source of truth.
+          // Replaces local seed data so newly connected devices drop sample names (Maria, João, Ana)
+          if (Array.isArray(data.employees)) {
+            state.employees = data.employees.map(e => ({
+              ...e,
+              folgas: Array.isArray(e.folgas) ? e.folgas : []
+            }));
             saveEmployees();
           }
 
-          // 2. SCHEDULES: Non-destructive merge
+          // 2. SCHEDULES: Cloud spreadsheet is source of truth
           if (data.schedules && typeof data.schedules === 'object') {
-            state.schedules = { ...state.schedules, ...data.schedules };
+            state.schedules = data.schedules;
             saveSchedules();
           }
 
-          // 3. SETTINGS: Preserve local sheetsUrl
+          // 3. SETTINGS: Cloud spreadsheet is source of truth, preserve configured sheetsUrl
           if (data.settings && typeof data.settings === 'object') {
             state.settings = {
-              ...state.settings,
+              ...DEFAULT_SETTINGS,
               ...data.settings,
-              sheetsUrl: url
+              sheetsUrl: url // keep active url intact
             };
             saveSettings();
           }
@@ -4175,9 +4295,46 @@ function doPost(e) {
         .replace(/'/g, '&#039;');
     }
 
+    // Check and process auto-connection from URL parameter (?nuvem=URL or ?sheets=URL)
+    function checkUrlCloudParameter() {
+      try {
+        const urlParams = new URLSearchParams(window.location.search);
+        const cloudParam = urlParams.get('nuvem') || urlParams.get('sheets');
+        if (cloudParam && cloudParam.trim()) {
+          const cleanUrl = cloudParam.trim();
+          state.settings.sheetsUrl = cleanUrl;
+          saveSettings();
+
+          // Clean URL parameter without reloading page
+          try {
+            const cleanUrlPath = window.location.pathname + window.location.hash;
+            window.history.replaceState({}, document.title, cleanUrlPath);
+          } catch (e) {
+            // ignore
+          }
+
+          updateSyncUI();
+
+          // Immediately sync data from cloud
+          fetchFromCloud(false).then((success) => {
+            if (success) {
+              showToast('☁️ Conectado à nuvem via link — dados sincronizados');
+            } else {
+              showToast('☁️ Conectado via link (operando offline até resposta da nuvem)');
+            }
+          });
+          return true;
+        }
+      } catch (err) {
+        console.warn('Erro ao processar parâmetro de URL da nuvem:', err);
+      }
+      return false;
+    }
+
     // DOM EVENT LISTENERS
     document.addEventListener('DOMContentLoaded', () => {
       loadStorage();
+      const connectedFromUrl = checkUrlCloudParameter();
       updateSyncUI();
       startClock();
       renderHomeScreen();
@@ -4187,6 +4344,30 @@ function doPost(e) {
       const scriptTextarea = document.getElementById('scriptCodeTextarea');
       if (scriptTemplateEl && scriptTextarea) {
         scriptTextarea.value = scriptTemplateEl.textContent.trim();
+      }
+
+      // Copy shareable link button
+      const btnCopyShareLink = document.getElementById('btnCopyShareableLink');
+      if (btnCopyShareLink) {
+        btnCopyShareLink.addEventListener('click', async () => {
+          const shareInput = document.getElementById('shareableLinkInput');
+          if (shareInput && shareInput.value) {
+            try {
+              await navigator.clipboard.writeText(shareInput.value);
+              btnCopyShareLink.textContent = '✓ Copiado!';
+              setTimeout(() => {
+                btnCopyShareLink.textContent = 'Copiar';
+              }, 2500);
+            } catch (err) {
+              shareInput.select();
+              document.execCommand('copy');
+              btnCopyShareLink.textContent = '✓ Copiado!';
+              setTimeout(() => {
+                btnCopyShareLink.textContent = 'Copiar';
+              }, 2500);
+            }
+          }
+        });
       }
 
       // Copy Apps Script code button
@@ -4210,8 +4391,8 @@ function doPost(e) {
         });
       }
 
-      // Initial cloud pull if URL is configured
-      if (state.settings.sheetsUrl) {
+      // Initial cloud pull if URL is configured and was not already triggered via URL param
+      if (state.settings.sheetsUrl && !connectedFromUrl) {
         fetchFromCloud(true);
       }
 
