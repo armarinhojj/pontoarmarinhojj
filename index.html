@@ -1410,8 +1410,8 @@ table.shell-table tbody tr:hover { background: color-mix(in srgb, var(--accent) 
   <!-- Top App Bar -->
   <header class="app-header">
     <div class="app-header-inner">
-      <h1 class="brand-title">
-        <span>🧵 Armarinho J.J.</span>
+      <h1 class="brand-title" id="headerBrandTitleWrap">
+        <span id="headerBrandTitle">🧵 Armarinho J.J. — Controle de Ponto</span>
         <span class="brand-badge">Ponto</span>
       </h1>
       <div style="display: flex; align-items: center; gap: 0.5rem;">
@@ -1859,6 +1859,7 @@ table.shell-table tbody tr:hover { background: color-mix(in srgb, var(--accent) 
               <thead>
                 <tr>
                   <th>Funcionário</th>
+                  <th>Função</th>
                   <th>Status</th>
                   <th>Folgas</th>
                   <th>Faltas</th>
@@ -2003,7 +2004,7 @@ table.shell-table tbody tr:hover { background: color-mix(in srgb, var(--accent) 
         <div id="tabEmployees" class="admin-tab-pane hidden">
           <div class="flex-row" style="margin-bottom:1rem;">
             <p style="margin:0; font-size:0.85rem; color:#64748b;">
-              Cadastre os funcionários e defina o código PIN de 4 dígitos para cada um.
+              Cadastre os funcionários com nome, função e defina o PIN de 4 dígitos para cada um.
             </p>
             <button id="btnOpenNewEmpModal" class="btn" style="background:var(--accent); color:#fff; border:none; padding:0.45rem 0.85rem; font-size:0.85rem; font-weight:600; border-radius:6px; cursor:pointer;">
               + Adicionar Funcionário
@@ -2015,6 +2016,7 @@ table.shell-table tbody tr:hover { background: color-mix(in srgb, var(--accent) 
               <thead>
                 <tr>
                   <th>Nome</th>
+                  <th>Função</th>
                   <th>PIN</th>
                   <th>Dias de Folga</th>
                   <th>Status</th>
@@ -2031,9 +2033,40 @@ table.shell-table tbody tr:hover { background: color-mix(in srgb, var(--accent) 
         <!-- TAB 4: SETTINGS & DANGER ZONE -->
         <div id="tabSettings" class="admin-tab-pane hidden">
           <div style="max-width: 540px;">
-            <h3 style="font-size:1.05rem; font-weight:700; color:#1e293b; margin-top:0;">Parâmetros de Ponto da Loja</h3>
-            
             <form id="formSettings">
+              <!-- BLOCO: DADOS DA LOJA -->
+              <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:1.15rem; margin-bottom:1.5rem;">
+                <h3 style="font-size:1.05rem; font-weight:700; color:var(--accent); margin:0 0 0.25rem;">
+                  🏬 Dados da Loja
+                </h3>
+                <p style="margin:0 0 1rem; font-size:0.8rem; color:#64748b;">
+                  Exibidos no cabeçalho do app, espelho de ponto, rodapé e exportações CSV.
+                </p>
+
+                <div class="form-group">
+                  <label for="setStoreNome">Nome da Loja</label>
+                  <input type="text" id="setStoreNome" class="form-control" placeholder="Armarinho J.J." required>
+                </div>
+
+                <div class="form-group">
+                  <label for="setStoreEndereco">Endereço</label>
+                  <input type="text" id="setStoreEndereco" class="form-control" placeholder="Ex.: Rua do Comércio, 120 - Centro">
+                </div>
+
+                <div class="form-row">
+                  <div class="form-group">
+                    <label for="setStoreTelefone">Telefone</label>
+                    <input type="text" id="setStoreTelefone" class="form-control" placeholder="(00) 00000-0000">
+                  </div>
+                  <div class="form-group">
+                    <label for="setStoreCnpj">CNPJ</label>
+                    <input type="text" id="setStoreCnpj" class="form-control" placeholder="00.000.000/0001-00">
+                  </div>
+                </div>
+              </div>
+
+              <h3 style="font-size:1.05rem; font-weight:700; color:#1e293b; margin-top:0;">Parâmetros de Ponto da Loja</h3>
+              
               <div class="form-group">
                 <label for="setEntradaPadrao">Horário Padrão de Entrada (HH:MM)</label>
                 <input type="time" id="setEntradaPadrao" class="form-control" value="08:00" required>
@@ -2130,10 +2163,16 @@ table.shell-table tbody tr:hover { background: color-mix(in srgb, var(--accent) 
           <input type="text" id="empFormNome" class="form-control" required placeholder="Ex.: Maria Souza">
         </div>
 
-        <div class="form-group">
-          <label for="empFormPin">PIN de 4 dígitos</label>
-          <input type="password" id="empFormPin" class="form-control" maxlength="4" pattern="[0-9]{4}" required placeholder="0000" inputmode="numeric">
-          <small style="color:#64748b; font-size:0.75rem;">Apenas números (4 dígitos).</small>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="empFormFuncao">Função / Cargo</label>
+            <input type="text" id="empFormFuncao" class="form-control" placeholder="Ex.: Vendedor(a), Caixa, Gerente">
+          </div>
+          <div class="form-group">
+            <label for="empFormPin">PIN de 4 dígitos</label>
+            <input type="password" id="empFormPin" class="form-control" maxlength="4" pattern="[0-9]{4}" required placeholder="0000" inputmode="numeric">
+            <small style="color:#64748b; font-size:0.75rem;">Apenas números (4 dígitos).</small>
+          </div>
         </div>
 
         <div class="form-group">
@@ -2307,8 +2346,8 @@ table.shell-table tbody tr:hover { background: color-mix(in srgb, var(--accent) 
 
   <!-- APPS SCRIPT CODE TEMPLATE (Safe from character escaping issues) -->
   <script type="text/plain" id="appsScriptCode">/**
- * ARMARINHO J.J. - SISTEMA DE PONTO ELETRÔNICO (v2.0)
- * Google Apps Script Web App com Formatação Textual (@), Upsert Preciso e Migração Automática.
+ * ARMARINHO J.J. - SISTEMA DE PONTO ELETRÔNICO (v2.1)
+ * Google Apps Script Web App com Dados da Loja, Campo Função, Formato Textual (@) e Migração Automática.
  */
 
 var MONTH_MAP = {
@@ -2387,8 +2426,28 @@ function getOrCreateSheet(ss, name, headers) {
   return sheet;
 }
 
+function migrateFuncionariosSheet(sheet) {
+  var lastCol = Math.max(sheet.getLastColumn(), 1);
+  var headers = sheet.getRange(1, 1, 1, lastCol).getValues()[0];
+  var colFuncaoIdx = -1;
+  for (var c = 0; c < headers.length; c++) {
+    if (String(headers[c] || '').toLowerCase() === 'funcao') {
+      colFuncaoIdx = c + 1;
+      break;
+    }
+  }
+  if (colFuncaoIdx === -1) {
+    var newCol = Math.max(lastCol + 1, 6);
+    sheet.getRange(1, newCol).setValue('funcao');
+    sheet.getRange(1, 1, Math.max(sheet.getLastRow(), 1), newCol).setNumberFormat('@');
+    return newCol;
+  }
+  return colFuncaoIdx;
+}
+
 function initSheets(ss) {
-  getOrCreateSheet(ss, 'Funcionarios', ['id', 'nome', 'pin', 'ativo', 'folgasFixas']);
+  var empSheet = getOrCreateSheet(ss, 'Funcionarios', ['id', 'nome', 'pin', 'ativo', 'folgasFixas', 'funcao']);
+  migrateFuncionariosSheet(empSheet);
   getOrCreateSheet(ss, 'Escala', ['mes', 'funcionarioId', 'diasFolga']);
   getOrCreateSheet(ss, 'Registros', ['data', 'funcionarioId', 'funcionarioNome', 'entrada', 'intervaloInicio', 'intervaloFim', 'saida', 'id']);
   getOrCreateSheet(ss, 'Config', ['chave', 'valor']);
@@ -2552,10 +2611,20 @@ function doGet(e) {
   var action = (e && e.parameter && e.parameter.action) ? e.parameter.action : 'getAll';
 
   if (action === 'getAll') {
-    // 1. Employees
+    // 1. Employees (com suporte ao campo funcao e migracao transparente)
     var empSheet = ss.getSheetByName('Funcionarios');
-    empSheet.getRange(1, 1, Math.max(empSheet.getLastRow(), 1), 5).setNumberFormat('@');
+    var fCol = migrateFuncionariosSheet(empSheet);
+    empSheet.getRange(1, 1, Math.max(empSheet.getLastRow(), 1), Math.max(empSheet.getLastColumn(), 6)).setNumberFormat('@');
     var empData = empSheet.getDataRange().getValues();
+    var empHeaders = empData[0] || [];
+    var fIdx = -1;
+    for (var h = 0; h < empHeaders.length; h++) {
+      if (String(empHeaders[h] || '').toLowerCase() === 'funcao') {
+        fIdx = h;
+        break;
+      }
+    }
+
     var employees = [];
     for (var i = 1; i < empData.length; i++) {
       var row = empData[i];
@@ -2564,12 +2633,14 @@ function doGet(e) {
         if (row[4] !== undefined && row[4] !== null && String(row[4]).trim() !== '') {
           folgas = String(row[4]).split(',').map(function(n) { return parseInt(n.trim(), 10); }).filter(function(n) { return !isNaN(n); });
         }
+        var funcaoVal = (fIdx > -1 && row[fIdx] !== undefined) ? String(row[fIdx] || '').trim() : (row[5] ? String(row[5] || '').trim() : '');
         employees.push({
           id: String(row[0]),
           nome: String(row[1] || ''),
           pin: String(row[2] || '0000'),
           ativo: (row[3] === true || String(row[3]).toLowerCase() === 'true'),
-          folgas: folgas
+          folgas: folgas,
+          funcao: funcaoVal
         });
       }
     }
@@ -2577,10 +2648,14 @@ function doGet(e) {
     // 2. Schedules (com migração de chaves Date para 'YYYY-MM')
     var schedules = cleanAndMigrateEscala(ss);
 
-    // 3. Settings
+    // 3. Settings (com dados da loja: nomeLoja, endereco, telefone, cnpj)
     var cfgSheet = ss.getSheetByName('Config');
     var cfgData = cfgSheet.getDataRange().getValues();
     var settings = {
+      nomeLoja: 'Armarinho J.J.',
+      endereco: '',
+      telefone: '',
+      cnpj: '',
       entradaPadrao: '08:00',
       jornadaDiaria: 8,
       tolerancia: 15,
@@ -2594,7 +2669,7 @@ function doGet(e) {
         if (key === 'jornadaDiaria' || key === 'tolerancia') {
           settings[key] = Number(val);
         } else {
-          settings[key] = String(val);
+          settings[key] = String(val === null || val === undefined ? '' : val);
         }
       }
     }
@@ -2676,11 +2751,12 @@ function doPost(e) {
     return jsonResponse({ ok: true });
   }
 
-  // SAVE EMPLOYEE (Upsert por id)
+  // SAVE EMPLOYEE (Upsert por id com coluna funcao)
   if (action === 'saveEmployee') {
     var emp = payload.employee;
     if (emp && emp.id) {
       var eSheet = ss.getSheetByName('Funcionarios');
+      migrateFuncionariosSheet(eSheet);
       var eData = eSheet.getDataRange().getValues();
       var eIndex = -1;
       for (var j = 1; j < eData.length; j++) {
@@ -2690,7 +2766,8 @@ function doPost(e) {
         }
       }
       var folgasStr = Array.isArray(emp.folgas) ? emp.folgas.join(',') : '';
-      var eRow = [String(emp.id), String(emp.nome || ''), String(emp.pin || '0000'), !!emp.ativo, folgasStr];
+      var funcaoStr = String(emp.funcao || '').trim();
+      var eRow = [String(emp.id), String(emp.nome || ''), String(emp.pin || '0000'), !!emp.ativo, folgasStr, funcaoStr];
       if (eIndex > 0) {
         var eRange = eSheet.getRange(eIndex, 1, 1, eRow.length);
         eRange.setNumberFormat('@');
@@ -2755,16 +2832,17 @@ function doPost(e) {
     return jsonResponse({ ok: true });
   }
 
-  // SAVE SETTINGS
+  // SAVE SETTINGS (inclui nomeLoja, endereco, telefone, cnpj)
   if (action === 'saveSettings') {
     var settingsObj = payload.settings || {};
     var confSheet = ss.getSheetByName('Config');
     confSheet.clearContents();
     confSheet.appendRow(['chave', 'valor']);
-    confSheet.getRange(1, 1, 10, 2).setNumberFormat('@');
+    confSheet.getRange(1, 1, Math.max(Object.keys(settingsObj).length + 1, 20), 2).setNumberFormat('@');
     for (var cKey in settingsObj) {
       if (settingsObj.hasOwnProperty(cKey)) {
-        confSheet.appendRow([String(cKey), String(settingsObj[cKey])]);
+        var cVal = settingsObj[cKey];
+        confSheet.appendRow([String(cKey), String(cVal === null || cVal === undefined ? '' : cVal)]);
       }
     }
     return jsonResponse({ ok: true });
@@ -2795,8 +2873,9 @@ function doPost(e) {
   <!-- Page Footer -->
   <footer class="app-footer">
     <p style="margin: 0 0 0.35rem;">
-      Armarinho J.J. &bull; Sistema de Ponto Eletrônico Interno &bull; <a id="linkHowToUse" role="button">Como usar</a>
+      <span id="footerStoreName">Armarinho J.J.</span> &bull; Sistema de Ponto Eletrônico Interno &bull; <a id="linkHowToUse" role="button">Como usar</a>
     </p>
+    <p id="footerStoreDetails" style="margin: 0 0 0.35rem; font-size: 0.75rem; opacity: 0.9;" class="hidden"></p>
     <p style="margin: 0; font-size: 0.75rem; opacity: 0.8;">
       Armazenamento 100% seguro no dispositivo do estabelecimento (localStorage).
     </p>
@@ -2815,9 +2894,9 @@ function doPost(e) {
 
     // Default Seed Data (0=Dom, 1=Seg, 2=Ter, 3=Qua, 4=Qui, 5=Sex, 6=Sab)
     const DEFAULT_EMPLOYEES = [
-      { id: 'emp_1', nome: 'Maria Souza', pin: '0000', ativo: true, folgas: [0] },
-      { id: 'emp_2', nome: 'João Lima', pin: '0000', ativo: true, folgas: [1] },
-      { id: 'emp_3', nome: 'Ana Ferreira', pin: '0000', ativo: true, folgas: [2] }
+      { id: 'emp_1', nome: 'Maria Souza', funcao: 'Vendedora', pin: '0000', ativo: true, folgas: [0] },
+      { id: 'emp_2', nome: 'João Lima', funcao: 'Caixa', pin: '0000', ativo: true, folgas: [1] },
+      { id: 'emp_3', nome: 'Ana Ferreira', funcao: 'Estoquista', pin: '0000', ativo: true, folgas: [2] }
     ];
 
     const WEEKDAYS_MAP = [
@@ -2833,6 +2912,10 @@ function doPost(e) {
     const DEFAULT_SHEETS_URL = 'https://script.google.com/macros/s/AKfycbyKccHJiWhGxqQ1ZpJuGJW_sDvvx7_L-HvXMj4Gf33MwOLecKHg6RhWHq-33GVb81a-0w/exec';
 
     const DEFAULT_SETTINGS = {
+      nomeLoja: 'Armarinho J.J.',
+      endereco: '',
+      telefone: '',
+      cnpj: '',
       entradaPadrao: '08:00',
       jornadaDiaria: 8,
       tolerancia: 15,
@@ -3024,10 +3107,13 @@ function doPost(e) {
       const storedEmps = localStorage.getItem(STORAGE_KEY_EMPS);
       if (storedEmps) {
         state.employees = JSON.parse(storedEmps);
-        // Compatibility: ensure folgas array exists for every employee
+        // Compatibility: ensure folgas array and funcao string exist for every employee
         state.employees.forEach(e => {
           if (!Array.isArray(e.folgas)) {
             e.folgas = [];
+          }
+          if (typeof e.funcao !== 'string') {
+            e.funcao = '';
           }
         });
       } else {
@@ -3087,6 +3173,47 @@ function doPost(e) {
       saveEmployees();
       saveSettings();
       saveSchedules();
+      updateStoreBranding();
+    }
+
+    // UPDATE STORE BRANDING THROUGHOUT THE APP
+    function updateStoreBranding() {
+      const storeName = (state.settings.nomeLoja || '').trim() || 'Armarinho J.J.';
+      
+      // Update browser tab title
+      document.title = `${storeName} — Controle de Ponto`;
+
+      // Header title
+      const headerTitleEl = document.getElementById('headerBrandTitle');
+      if (headerTitleEl) {
+        headerTitleEl.textContent = `🧵 ${storeName} — Controle de Ponto`;
+      }
+
+      // Footer
+      const footerStoreName = document.getElementById('footerStoreName');
+      if (footerStoreName) {
+        footerStoreName.textContent = storeName;
+      }
+
+      const footerDetails = document.getElementById('footerStoreDetails');
+      if (footerDetails) {
+        const parts = [];
+        if (state.settings.endereco && state.settings.endereco.trim()) {
+          parts.push(state.settings.endereco.trim());
+        }
+        if (state.settings.telefone && state.settings.telefone.trim()) {
+          parts.push(`Tel: ${state.settings.telefone.trim()}`);
+        }
+        if (state.settings.cnpj && state.settings.cnpj.trim()) {
+          parts.push(`CNPJ: ${state.settings.cnpj.trim()}`);
+        }
+        if (parts.length > 0) {
+          footerDetails.textContent = parts.join(' • ');
+          footerDetails.classList.remove('hidden');
+        } else {
+          footerDetails.classList.add('hidden');
+        }
+      }
     }
 
     function saveEmployees() {
@@ -3525,7 +3652,8 @@ function doPost(e) {
           if (Array.isArray(data.employees)) {
             state.employees = data.employees.map(e => ({
               ...e,
-              folgas: Array.isArray(e.folgas) ? e.folgas : []
+              folgas: Array.isArray(e.folgas) ? e.folgas : [],
+              funcao: typeof e.funcao === 'string' ? e.funcao : ''
             }));
             saveEmployees();
           }
@@ -3547,10 +3675,11 @@ function doPost(e) {
           if (data.settings && typeof data.settings === 'object') {
             state.settings = {
               ...DEFAULT_SETTINGS,
-              ...data.settings,
-              sheetsUrl: url // keep active url intact
+              ...data.settings
             };
+            if (url) state.settings.sheetsUrl = url;
             saveSettings();
+            updateStoreBranding();
           }
 
           // 4. RECORDS MERGE: Clean, deduplicate and merge
@@ -3816,16 +3945,18 @@ function doPost(e) {
         const btn = document.createElement('button');
         btn.type = 'button';
         btn.className = 'emp-card-btn';
+        const funcaoLine = emp.funcao ? `<div style="font-size:0.8rem; color:#64748b; font-weight:500; margin-top:-0.15rem;">${escapeHtml(emp.funcao)}</div>` : '';
         btn.innerHTML = `
           <div class="emp-avatar">${emp.nome.charAt(0).toUpperCase()}</div>
           <div class="emp-card-name">${escapeHtml(emp.nome)}</div>
+          ${funcaoLine}
           <div class="emp-status-badge" style="color:${statusColor}">
             <span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:${statusColor}"></span>
             ${statusText}
           </div>
         `;
         btn.addEventListener('click', () => {
-          openPinModal('emp', emp.id, emp.nome);
+          openPinModal('emp', emp.id, emp.nome, emp.funcao);
         });
 
         grid.appendChild(btn);
@@ -3833,7 +3964,7 @@ function doPost(e) {
     }
 
     // PIN MODAL LOGIC
-    function openPinModal(mode, empId = null, empName = '') {
+    function openPinModal(mode, empId = null, empName = '', empFuncao = '') {
       state.pinMode = mode;
       state.pinTargetEmpId = empId;
       state.pinInput = '';
@@ -3848,7 +3979,9 @@ function doPost(e) {
         subEl.textContent = 'Digite o PIN master de 4 dígitos';
       } else {
         titleEl.textContent = empName;
-        subEl.textContent = 'Digite o seu PIN de 4 dígitos para bater ponto';
+        subEl.textContent = empFuncao 
+          ? `${empFuncao} — Digite seu PIN de 4 dígitos` 
+          : 'Digite o seu PIN de 4 dígitos para bater ponto';
       }
 
       document.getElementById('pinModal').classList.remove('hidden');
@@ -3925,7 +4058,8 @@ function doPost(e) {
       const emp = state.currentEmployee;
       const today = new Date();
       document.getElementById('empWelcomeName').textContent = emp.nome;
-      document.getElementById('empWelcomeDate').textContent = formatLongDate(today);
+      const roleSubtitle = emp.funcao ? ` (${emp.funcao})` : '';
+      document.getElementById('empWelcomeDate').textContent = `${formatLongDate(today)}${roleSubtitle}`;
 
       // Check if today is a rest day (folga) using monthly schedule logic
       const todayStr = getTodayDateStr();
@@ -4439,9 +4573,14 @@ function doPost(e) {
 
           const tr = document.createElement('tr');
           const recIdAttr = rec ? rec.id : '';
+          const tooltipAttr = emp.funcao ? `title="Função: ${escapeHtml(emp.funcao)}"` : '';
+          const roleInline = emp.funcao ? `<span style="font-size:0.75rem; color:#64748b; display:block;">${escapeHtml(emp.funcao)}</span>` : '';
           tr.innerHTML = `
             <td><strong>${formatDateBR(dateStr)}</strong></td>
-            <td>${escapeHtml(emp.nome)}</td>
+            <td ${tooltipAttr}>
+              <strong>${escapeHtml(emp.nome)}</strong>
+              ${roleInline}
+            </td>
             <td>${rec?.entrada || '-'}</td>
             <td>${rec?.intervaloInicio || '-'}</td>
             <td>${rec?.intervaloFim || '-'}</td>
@@ -4496,6 +4635,13 @@ function doPost(e) {
       const monthName = MONTH_NAMES[monthIndex];
       const todayIso = getTodayDateStr();
       const nowEmitDate = new Date().toLocaleString('pt-BR');
+
+      const storeName = (state.settings.nomeLoja || '').trim() || 'Armarinho J.J.';
+      const storeParts = [];
+      if (state.settings.endereco && state.settings.endereco.trim()) storeParts.push(escapeHtml(state.settings.endereco.trim()));
+      if (state.settings.telefone && state.settings.telefone.trim()) storeParts.push(`Tel: ${escapeHtml(state.settings.telefone.trim())}`);
+      if (state.settings.cnpj && state.settings.cnpj.trim()) storeParts.push(`CNPJ: ${escapeHtml(state.settings.cnpj.trim())}`);
+      const storeDetailsHtml = storeParts.length > 0 ? storeParts.join(' &bull; ') : '';
 
       const dailyJornadaMin = (state.settings.jornadaDiaria || 8) * 60;
       let totalWorkedMinutes = 0;
@@ -4575,9 +4721,9 @@ function doPost(e) {
         <!-- Document Header -->
         <div class="espelho-header-box">
           <div>
-            <div style="font-size:0.75rem; font-weight:800; color:#64748b; letter-spacing:0.05em; text-transform:uppercase;">Armarinho J.J. &bull; CNPJ 00.000.000/0001-00</div>
-            <h2 class="espelho-header-title">ARMARINHO J.J. — ESPELHO DE PONTO</h2>
-            <div style="font-size:0.85rem; color:#475569;">Controle e Registro de Jornada de Trabalho Individual</div>
+            <h2 class="espelho-header-title">${escapeHtml(storeName.toUpperCase())} — ESPELHO DE PONTO</h2>
+            ${storeDetailsHtml ? `<div style="font-size:0.75rem; color:#475569; margin-top:0.2rem; font-weight:600;">${storeDetailsHtml}</div>` : ''}
+            <div style="font-size:0.85rem; color:#64748b; margin-top:0.25rem;">Controle e Registro de Jornada de Trabalho Individual</div>
           </div>
           <div style="text-align:right;">
             <div style="font-size:0.75rem; color:#64748b;">Mês de Referência</div>
@@ -4593,7 +4739,7 @@ function doPost(e) {
           </div>
           <div class="espelho-meta-item">
             <strong>Função / Cargo</strong>
-            <span>Operador(a) de Loja</span>
+            <span>${emp.funcao ? escapeHtml(emp.funcao) : 'Geral'}</span>
           </div>
           <div class="espelho-meta-item">
             <strong>Carga Horária Padrão</strong>
@@ -4650,13 +4796,13 @@ function doPost(e) {
         <div class="espelho-signatures">
           <div class="signature-block">
             <div class="signature-line"></div>
-            <div class="signature-role">${escapeHtml(emp.nome)}</div>
+            <div class="signature-role">${escapeHtml(emp.nome)}${emp.funcao ? ` (${escapeHtml(emp.funcao)})` : ''}</div>
             <div class="signature-sub">Assinatura do Funcionário</div>
           </div>
 
           <div class="signature-block">
             <div class="signature-line"></div>
-            <div class="signature-role">Armarinho J.J.</div>
+            <div class="signature-role">${escapeHtml(storeName)}</div>
             <div class="signature-sub">Assinatura do Gestor / Responsável</div>
           </div>
         </div>
@@ -4667,7 +4813,7 @@ function doPost(e) {
 
         <!-- Discrete Footer -->
         <div class="espelho-footer-note">
-          <span>Documento gerado pelo sistema de ponto da Armarinho J.J. em ${nowEmitDate}</span>
+          <span>Documento gerado pelo sistema de ponto de ${escapeHtml(storeName)} em ${nowEmitDate}</span>
           <span>Página 1 de 1</span>
         </div>
       `;
@@ -5000,6 +5146,7 @@ function doPost(e) {
         const tr = document.createElement('tr');
         tr.innerHTML = `
           <td><strong>${escapeHtml(emp.nome)}</strong></td>
+          <td>${emp.funcao ? escapeHtml(emp.funcao) : '<span style="color:#94a3b8;">—</span>'}</td>
           <td>
             ${emp.ativo ? '<span class="tag-badge tag-ontime">Ativo</span>' : '<span class="tag-badge tag-delay">Inativo</span>'}
           </td>
@@ -5042,6 +5189,7 @@ function doPost(e) {
         const tr = document.createElement('tr');
         tr.innerHTML = `
           <td><strong>${escapeHtml(emp.nome)}</strong></td>
+          <td>${emp.funcao ? `<span style="font-weight:600; color:#334155;">${escapeHtml(emp.funcao)}</span>` : '<span style="color:#94a3b8;">—</span>'}</td>
           <td><code style="background:#e2e8f0; padding:0.15rem 0.4rem; border-radius:4px; font-weight:700;">${escapeHtml(emp.pin || '0000')}</code></td>
           <td><span class="tag-badge tag-folga" style="font-weight:600;">${escapeHtml(folgasLabel)}</span></td>
           <td>
@@ -5067,6 +5215,13 @@ function doPost(e) {
 
     // Tab 4: Settings form
     function loadAdminSettingsForm() {
+      // Store info
+      document.getElementById('setStoreNome').value = state.settings.nomeLoja || 'Armarinho J.J.';
+      document.getElementById('setStoreEndereco').value = state.settings.endereco || '';
+      document.getElementById('setStoreTelefone').value = state.settings.telefone || '';
+      document.getElementById('setStoreCnpj').value = state.settings.cnpj || '';
+
+      // Standard punch parameters
       document.getElementById('setEntradaPadrao').value = state.settings.entradaPadrao || '08:00';
       document.getElementById('setJornadaDiaria').value = state.settings.jornadaDiaria || 8;
       document.getElementById('setTolerancia').value = state.settings.tolerancia || 15;
@@ -5085,6 +5240,7 @@ function doPost(e) {
       const headers = [
         'Data',
         'Funcionario',
+        'Funcao',
         'Entrada',
         'Inicio_Intervalo',
         'Fim_Intervalo',
@@ -5113,6 +5269,15 @@ function doPost(e) {
         targetEmps = targetEmps.filter(e => e.ativo);
       }
 
+      // First line comment with store data
+      const storeParts = [];
+      const sNome = (state.settings.nomeLoja || '').trim() || 'Armarinho J.J.';
+      storeParts.push(sNome);
+      if (state.settings.endereco && state.settings.endereco.trim()) storeParts.push(state.settings.endereco.trim());
+      if (state.settings.telefone && state.settings.telefone.trim()) storeParts.push(state.settings.telefone.trim());
+      if (state.settings.cnpj && state.settings.cnpj.trim()) storeParts.push(state.settings.cnpj.trim());
+      const storeCommentLine = `# ${storeParts.join(';')}`;
+
       const rows = [];
 
       allDates.forEach(dateStr => {
@@ -5129,6 +5294,7 @@ function doPost(e) {
           rows.push([
             dateStr,
             `"${emp.nome.replace(/"/g, '""')}"`,
+            `"${(emp.funcao || '').replace(/"/g, '""')}"`,
             rec?.entrada || '',
             rec?.intervaloInicio || '',
             rec?.intervaloFim || '',
@@ -5141,12 +5307,13 @@ function doPost(e) {
         });
       });
 
-      const csvContent = '\uFEFF' + [headers.join(';'), ...rows].join('\r\n');
+      const csvContent = '\uFEFF' + [storeCommentLine, headers.join(';'), ...rows].join('\r\n');
       const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.setAttribute('href', url);
-      link.setAttribute('download', `espelho_ponto_armarinho_jj_${dateStart}_a_${dateEnd}.csv`);
+      const safeStoreFile = sNome.toLowerCase().replace(/[^a-z0-9]/g, '_');
+      link.setAttribute('download', `ponto_${safeStoreFile}_${dateStart}_a_${dateEnd}.csv`);
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -5160,6 +5327,7 @@ function doPost(e) {
       document.getElementById('empModalTitle').textContent = 'Editar Funcionário';
       document.getElementById('empFormId').value = emp.id;
       document.getElementById('empFormNome').value = emp.nome;
+      document.getElementById('empFormFuncao').value = emp.funcao || '';
       document.getElementById('empFormPin').value = emp.pin || '0000';
       document.getElementById('empFormAtivo').checked = !!emp.ativo;
 
@@ -5595,6 +5763,7 @@ function doPost(e) {
         document.getElementById('empModalTitle').textContent = 'Adicionar Funcionário';
         document.getElementById('empFormId').value = '';
         document.getElementById('empFormNome').value = '';
+        document.getElementById('empFormFuncao').value = '';
         document.getElementById('empFormPin').value = '0000';
         document.getElementById('empFormAtivo').checked = true;
         document.querySelectorAll('input[name="empFolgaCheckbox"]').forEach(cb => cb.checked = false);
@@ -5609,6 +5778,7 @@ function doPost(e) {
         e.preventDefault();
         const id = document.getElementById('empFormId').value;
         const nome = document.getElementById('empFormNome').value.trim();
+        const funcao = document.getElementById('empFormFuncao').value.trim();
         const pin = document.getElementById('empFormPin').value.trim();
         const ativo = document.getElementById('empFormAtivo').checked;
 
@@ -5625,6 +5795,7 @@ function doPost(e) {
           const emp = state.employees.find(e => e.id === id);
           if (emp) {
             emp.nome = nome;
+            emp.funcao = funcao;
             emp.pin = pin;
             emp.ativo = ativo;
             emp.folgas = folgas;
@@ -5634,6 +5805,7 @@ function doPost(e) {
           savedEmp = {
             id: 'emp_' + Date.now(),
             nome,
+            funcao,
             pin,
             ativo,
             folgas
@@ -5725,6 +5897,11 @@ function doPost(e) {
       // Admin Settings Form
       document.getElementById('formSettings').addEventListener('submit', (e) => {
         e.preventDefault();
+        state.settings.nomeLoja = document.getElementById('setStoreNome').value.trim() || 'Armarinho J.J.';
+        state.settings.endereco = document.getElementById('setStoreEndereco').value.trim();
+        state.settings.telefone = document.getElementById('setStoreTelefone').value.trim();
+        state.settings.cnpj = document.getElementById('setStoreCnpj').value.trim();
+
         state.settings.entradaPadrao = document.getElementById('setEntradaPadrao').value;
         state.settings.jornadaDiaria = parseFloat(document.getElementById('setJornadaDiaria').value) || 8;
         state.settings.tolerancia = parseInt(document.getElementById('setTolerancia').value, 10) || 15;
@@ -5735,16 +5912,23 @@ function doPost(e) {
         }
 
         saveSettings();
+        updateStoreBranding();
+
         pushActionToCloud({
           action: 'saveSettings',
           settings: {
+            nomeLoja: state.settings.nomeLoja,
+            endereco: state.settings.endereco,
+            telefone: state.settings.telefone,
+            cnpj: state.settings.cnpj,
             entradaPadrao: state.settings.entradaPadrao,
             jornadaDiaria: state.settings.jornadaDiaria,
             tolerancia: state.settings.tolerancia,
             adminPin: state.settings.adminPin
           }
         });
-        alert('Configurações salvas com sucesso!');
+        alert('Configurações da loja e de ponto salvas com sucesso!');
+        renderEspelhoTabPreview();
         renderAdminMonthly();
       });
 
